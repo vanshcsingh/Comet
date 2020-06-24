@@ -1,0 +1,15 @@
+
+# task is a build-tool created for Go called task
+# documentation: https://taskfile.dev/
+
+version: '1'
+
+tasks:
+  build:
+    cmds:
+      - go build ./...
+
+  test:
+    cmds:
+      - go test ./... 
+
