@@ -6,6 +6,10 @@ version: '1'
 
 
 tasks:
+  default:
+    deps:
+      - task: build
+
   build:
     cmds:
       - go build ./...
