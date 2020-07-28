@@ -16,12 +16,12 @@ const (
 type Server struct {
 }
 
-// Predict takes in a context and predict request
+// Query takes in a context hash and a set of features, it returns a query ID
 func (s *Server) Query(ctxh string, xDim int32, yDim int32, type string, features []int32) (string, error) {
 	return nil, nil
 }
 
-// Predict takes in a context and predict request
+// Feedback takes in a context hash, query Id and a score
 func (s *Server) Feedback(ctxh string, queryID string, evaluation int32) (error) {
 	return nil
 }
