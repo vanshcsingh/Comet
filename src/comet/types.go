@@ -6,6 +6,9 @@ import (
 	malpb "comet/abstraction_service/pb"
 )
 
+// ModelIDType wraps the type of ModelIDs
+type ModelIDType int32
+
 // ImageVectorType defines an MNIST image type
 type ImageVectorType []int32
 
@@ -13,7 +16,7 @@ type ImageVectorType []int32
 // the PredictRequest abstraction_service pb
 type PredictParams struct {
 	ImageVector ImageVectorType
-	ModelID int32
+	ModelID ModelIDType
 	ContextUUID string
 	Hash string
 }
@@ -28,7 +31,7 @@ type PredictResult struct {
 func CreatePredictParamsMAL(pr *malpb.PredictRequest) *PredictParams {
 	return &PredictParams{
 		ImageVector: pr.GetImageVector(),
-		ModelID: pr.GetModelId(),
+		ModelID: ModelIDType(pr.GetModelId()),
 		ContextUUID: pr.GetContextUuid(),
 		Hash: predictRequestHash(pr),
 	}

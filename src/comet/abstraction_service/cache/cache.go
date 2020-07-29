@@ -69,6 +69,7 @@ func (lc *LocalCache) Request(predictParams *comet.PredictParams) string {
 		return cachedLabel
 	}
 
+	// TODO: test performance agains having all Request calls wait on a shared condition variable
 	// create channel
 	lc.rpcChanMap[predictParams.Hash] = make(chan *comet.PredictResult)
 	lc.predictProducer.Publish(predictParams)

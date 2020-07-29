@@ -18,12 +18,13 @@ type LocalBatcher struct {
 	predictConsumer PredictConsumer
 	resultProducer ResultProducer
 
-	modelLockMap map[int32] *sync.Mutex
-	modelQueue map[int32] []*comet.PredictParams
+	modelLockMap map[comet.ModelIDType] *sync.Mutex
+	modelLockMapLock *sync.Mutex
+	modelQueue map[comet.ModelIDType] []*comet.PredictParams
 
 	sendBatchLock *sync.Mutex	
-	sendBatchMap map[int32] bool
-	sendBatch chan int32
+	sendBatchMap map[comet.ModelIDType] bool
+	sendBatch chan comet.ModelIDType
 }
 
 // CreateLocalBatcher creates a local implementation of Service
@@ -32,13 +33,14 @@ func CreateLocalBatcher(consumer PredictConsumer, producer ResultProducer, perio
 		predictConsumer: consumer,
 		resultProducer: producer,
 
-		modelLockMap: make(map[int32] *sync.Mutex),
-		modelQueue: make(map[int32] []*comet.PredictParams),
+		modelLockMap: make(map[comet.ModelIDType] *sync.Mutex),
+		modelLockMapLock: &sync.Mutex{},
+		modelQueue: make(map[comet.ModelIDType] []*comet.PredictParams),
 
 		// Channel alerts run thread when to send batch of predict calls
 		sendBatchLock: &sync.Mutex{},
-		sendBatchMap: make(map[int32] bool),
-		sendBatch: make(chan int32, 100),
+		sendBatchMap: make(map[comet.ModelIDType] bool),
+		sendBatch: make(chan comet.ModelIDType, 100),
 	}
 }
 
@@ -83,7 +85,7 @@ func (lb *LocalBatcher) consumerThread(batchThreshold int) {
 	}
 }
 
-func (lb *LocalBatcher) extractPredictParams(mID int32) []*comet.PredictParams {
+func (lb *LocalBatcher) extractPredictParams(mID comet.ModelIDType) []*comet.PredictParams {
 	lb.lockOnModelID(mID)
 	copyParams := lb.modelQueue[mID]
 	
@@ -96,7 +98,7 @@ func (lb *LocalBatcher) extractPredictParams(mID int32) []*comet.PredictParams {
 
 // This function is currently stubbed to test batchPredictCalls
 // It simply publishes a result to a label
-func (lb *LocalBatcher) batchPredictCalls(mID int32, params []*comet.PredictParams) {
+func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet.PredictParams) {
 	log.Println("batching", len(params), "predict calls on model#", mID)
 	log.Println("Predict params are: ", params)
 	log.Println("---------------------------------------------")
@@ -115,15 +117,22 @@ func (lb *LocalBatcher) batchPredictCalls(mID int32, params []*comet.PredictPara
 }
 
 // lockOnModelID locks a model's queue on its modelID
-func (lb *LocalBatcher) lockOnModelID(mID int32) {
+func (lb *LocalBatcher) lockOnModelID(mID comet.ModelIDType) {
 	_, exists := lb.modelLockMap[mID]
 	if !exists {
-		lb.modelLockMap[mID] = &sync.Mutex{}
+		// Lock inside of if statement so that codepath of 99.99% of calls
+		// are not impeded by synchronization congestion
+		lb.modelLockMapLock.Lock()
+		_, stillExists := lb.modelLockMap[mID]
+		if !stillExists {
+			lb.modelLockMap[mID] = &sync.Mutex{}
+		}
+		lb.modelLockMapLock.Unlock()
 	}
 	lb.modelLockMap[mID].Lock()
 }
 
 // unlockOnModelID locks a model's queue on its modelID
-func (lb *LocalBatcher) unlockOnModelID(mID int32) {
+func (lb *LocalBatcher) unlockOnModelID(mID comet.ModelIDType) {
 	lb.modelLockMap[mID].Unlock()
 }
