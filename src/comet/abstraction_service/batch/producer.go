@@ -16,12 +16,12 @@ type PredictProducer interface {
 // messagequeue system
 type LocalPredictProducer struct {
 	// write only channel
-	pipe chan<- *comet.PredictParams
+	Pipe chan<- *comet.PredictParams
 }
 
 // Publish publishes to local channel
 func (p *LocalPredictProducer) Publish(pp *comet.PredictParams) {
-	p.pipe <- pp
+	p.Pipe <- pp
 }
 
 // ResultProducer allows us to develop around this interface
@@ -36,10 +36,10 @@ type ResultProducer interface {
 // messagequeue system
 type LocalResultProducer struct {
 	// write only channel
-	pipe chan<- *comet.PredictResult
+	Pipe chan<- *comet.PredictResult
 }
 
 // Publish publishes to local channel
 func (p *LocalResultProducer) Publish(res *comet.PredictResult) {
-	p.pipe <- res
+	p.Pipe <- res
 }

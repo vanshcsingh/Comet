@@ -16,12 +16,12 @@ type PredictConsumer interface {
 // messagequeue system
 type LocalPredictConsumer struct {
 	// read only channel
-	pipe <-chan *comet.PredictParams
+	Pipe <-chan *comet.PredictParams
 }
 
 // Consume consumes from shared local channel
 func (c *LocalPredictConsumer) Consume() *comet.PredictParams {
-	return <- c.pipe
+	return <- c.Pipe
 }
 
 // ResultConsumer allows us to develop around this interface
@@ -36,10 +36,10 @@ type ResultConsumer interface {
 // messagequeue system
 type LocalResultConsumer struct {
 	// read only channel
-	pipe <-chan *comet.PredictResult
+	Pipe <-chan *comet.PredictResult
 }
 
 // Consume consumes from shared local channel
 func (c *LocalResultConsumer) Consume() *comet.PredictResult {
-	return <- c.pipe
+	return <- c.Pipe
 }
