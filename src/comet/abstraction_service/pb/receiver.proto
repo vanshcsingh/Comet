@@ -5,33 +5,16 @@ package pb;
 option go_package = "pb";
 
 service AbstractionService {
-
-	rpc PredictSetup(PredictSetupRequest) returns (PredictSetupReply) {}
-	
-	rpc Predict(stream Pixel) returns (PredictReply) {} 
+	rpc Predict(PredictRequest) returns (PredictReply) {} 
 }
 
-message PredictSetupRequest {
-	// unique ID used to identify a predict request
-	string predictID = 1;
-
-	uint32 imageLayers = 2;
-	uint32 imageWidth = 3;
-	uint32 imageHeight = 4;
+message PredictRequest {
+	repeated int32 image_vector = 1;
+	int32 model_id = 2;
+	string context_uuid = 3;
 }
 
 // in the future we may want to return some data
-message PredictSetupReply {}
-
-message Pixel {
-	// unique ID used to identify a predict request
-	string predictID = 1;
-	
-	uint32 layer = 2;
-	uint32 row = 3;
-	uint32 col = 4;
-	uint32 val = 5;
+message PredictReply {
+	string label = 1;
 }
-
-// in the future we may want to return some data
-message PredictReply {}

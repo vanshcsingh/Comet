@@ -17,8 +17,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AbstractionServiceClient interface {
-	PredictSetup(ctx context.Context, in *PredictSetupRequest, opts ...grpc.CallOption) (*PredictSetupReply, error)
-	Predict(ctx context.Context, opts ...grpc.CallOption) (AbstractionService_PredictClient, error)
+	Predict(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictReply, error)
 }
 
 type abstractionServiceClient struct {
@@ -29,55 +28,20 @@ func NewAbstractionServiceClient(cc grpc.ClientConnInterface) AbstractionService
 	return &abstractionServiceClient{cc}
 }
 
-func (c *abstractionServiceClient) PredictSetup(ctx context.Context, in *PredictSetupRequest, opts ...grpc.CallOption) (*PredictSetupReply, error) {
-	out := new(PredictSetupReply)
-	err := c.cc.Invoke(ctx, "/pb.AbstractionService/PredictSetup", in, out, opts...)
+func (c *abstractionServiceClient) Predict(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictReply, error) {
+	out := new(PredictReply)
+	err := c.cc.Invoke(ctx, "/pb.AbstractionService/Predict", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *abstractionServiceClient) Predict(ctx context.Context, opts ...grpc.CallOption) (AbstractionService_PredictClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_AbstractionService_serviceDesc.Streams[0], "/pb.AbstractionService/Predict", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &abstractionServicePredictClient{stream}
-	return x, nil
-}
-
-type AbstractionService_PredictClient interface {
-	Send(*Pixel) error
-	CloseAndRecv() (*PredictReply, error)
-	grpc.ClientStream
-}
-
-type abstractionServicePredictClient struct {
-	grpc.ClientStream
-}
-
-func (x *abstractionServicePredictClient) Send(m *Pixel) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *abstractionServicePredictClient) CloseAndRecv() (*PredictReply, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(PredictReply)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // AbstractionServiceServer is the server API for AbstractionService service.
 // All implementations must embed UnimplementedAbstractionServiceServer
 // for forward compatibility
 type AbstractionServiceServer interface {
-	PredictSetup(context.Context, *PredictSetupRequest) (*PredictSetupReply, error)
-	Predict(AbstractionService_PredictServer) error
+	Predict(context.Context, *PredictRequest) (*PredictReply, error)
 	mustEmbedUnimplementedAbstractionServiceServer()
 }
 
@@ -85,11 +49,8 @@ type AbstractionServiceServer interface {
 type UnimplementedAbstractionServiceServer struct {
 }
 
-func (*UnimplementedAbstractionServiceServer) PredictSetup(context.Context, *PredictSetupRequest) (*PredictSetupReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PredictSetup not implemented")
-}
-func (*UnimplementedAbstractionServiceServer) Predict(AbstractionService_PredictServer) error {
-	return status.Errorf(codes.Unimplemented, "method Predict not implemented")
+func (*UnimplementedAbstractionServiceServer) Predict(context.Context, *PredictRequest) (*PredictReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Predict not implemented")
 }
 func (*UnimplementedAbstractionServiceServer) mustEmbedUnimplementedAbstractionServiceServer() {}
 
@@ -97,48 +58,22 @@ func RegisterAbstractionServiceServer(s *grpc.Server, srv AbstractionServiceServ
 	s.RegisterService(&_AbstractionService_serviceDesc, srv)
 }
 
-func _AbstractionService_PredictSetup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PredictSetupRequest)
+func _AbstractionService_Predict_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PredictRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AbstractionServiceServer).PredictSetup(ctx, in)
+		return srv.(AbstractionServiceServer).Predict(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.AbstractionService/PredictSetup",
+		FullMethod: "/pb.AbstractionService/Predict",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AbstractionServiceServer).PredictSetup(ctx, req.(*PredictSetupRequest))
+		return srv.(AbstractionServiceServer).Predict(ctx, req.(*PredictRequest))
 	}
 	return interceptor(ctx, in, info, handler)
-}
-
-func _AbstractionService_Predict_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(AbstractionServiceServer).Predict(&abstractionServicePredictServer{stream})
-}
-
-type AbstractionService_PredictServer interface {
-	SendAndClose(*PredictReply) error
-	Recv() (*Pixel, error)
-	grpc.ServerStream
-}
-
-type abstractionServicePredictServer struct {
-	grpc.ServerStream
-}
-
-func (x *abstractionServicePredictServer) SendAndClose(m *PredictReply) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *abstractionServicePredictServer) Recv() (*Pixel, error) {
-	m := new(Pixel)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 var _AbstractionService_serviceDesc = grpc.ServiceDesc{
@@ -146,16 +81,10 @@ var _AbstractionService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*AbstractionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "PredictSetup",
-			Handler:    _AbstractionService_PredictSetup_Handler,
+			MethodName: "Predict",
+			Handler:    _AbstractionService_Predict_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Predict",
-			Handler:       _AbstractionService_Predict_Handler,
-			ClientStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "abstraction_service/pb/receiver.proto",
 }
