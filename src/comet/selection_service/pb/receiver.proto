@@ -10,24 +10,25 @@ service SelectionService {
 }
 
 message QueryRequest {
-	string ctxh = 1;
-	int32 xDim = 2;
-	int32 yDim = 3;
-	string fType = 4;
-	repeated int32 featureVector = 5;
+	repeated int32 feature_vector = 1;
+	string f_type = 2;
+	int32 x_dim = 3;
+	int32 y_dim = 4;
+	int32 layers = 5;
+	string context_uuid = 6;
 }
 
 message QueryReply {
 	string label = 1;
-	error e = 2;
+	int32 queryID = 2;
 }
 
 message FeedbackRequest {
-	string ctxh = 1;
+	string context_uuid = 1;
 	string queryID = 2;
 	int32 evaluation = 3;
 }
 
 message FeedbackReply {
-	error e = ;
+	// TODO	
 }
