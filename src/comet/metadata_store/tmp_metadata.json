@@ -1,0 +1,14 @@
+{
+	"model_entries": [
+		{
+			"model_id": 1,
+			"addr": "localhost:4000",
+			"desc": "tensorflow container"
+		},
+		{
+			"model_id": 2,
+			"addr": "localhost:4001",
+			"desc": "spark container"
+		}
+	]
+}

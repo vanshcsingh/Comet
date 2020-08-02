@@ -2,6 +2,8 @@ package batch
 
 import (
 	"comet"
+	md "comet/metadata_store"
+
 	"log"
 	"sync"
 	"time"
@@ -25,10 +27,18 @@ type LocalBatcher struct {
 	sendBatchLock *sync.Mutex	
 	sendBatchMap map[comet.ModelIDType] bool
 	sendBatch chan comet.ModelIDType
+
+	mdStore md.MetadataStore
 }
 
 // CreateAndStartLocalBatcher creates a local implementation of Service
-func CreateAndStartLocalBatcher(consumer PredictConsumer, producer ResultProducer, batchThreshold int, duration time.Duration) Service {
+func CreateAndStartLocalBatcher(
+	consumer PredictConsumer, 
+	producer ResultProducer, 
+	batchThreshold int, 
+	duration time.Duration,
+	mdStore md.MetadataStore,
+) Service {
 	lb := &LocalBatcher{
 		predictConsumer: consumer,
 		resultProducer: producer,
@@ -41,6 +51,8 @@ func CreateAndStartLocalBatcher(consumer PredictConsumer, producer ResultProduce
 		sendBatchLock: &sync.Mutex{},
 		sendBatchMap: make(map[comet.ModelIDType] bool),
 		sendBatch: make(chan comet.ModelIDType, 100),
+
+		mdStore: mdStore,
 	}
 	go lb.Run(batchThreshold, duration)
 	return lb
@@ -101,7 +113,7 @@ func (lb *LocalBatcher) extractPredictParams(mID comet.ModelIDType) []*comet.Pre
 // This function is currently stubbed to test batchPredictCalls
 // It simply publishes a result to a label
 func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet.PredictParams) {
-	log.Println("batching", len(params), "predict calls on model#", mID)
+	log.Println("batching", len(params), "predict calls on model#", mID, "to address: ", lb.mdStore.GetEntry(mID).Addr)
 	log.Println("Predict params are: ", params)
 	log.Println("---------------------------------------------")
 	log.Println()
