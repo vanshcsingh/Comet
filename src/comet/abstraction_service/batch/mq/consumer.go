@@ -1,4 +1,4 @@
-package batch
+package mq
 
 import (
 	"comet"

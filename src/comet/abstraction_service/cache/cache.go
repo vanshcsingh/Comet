@@ -2,7 +2,7 @@ package cache
 
 import (
 	"comet"
-	"comet/abstraction_service/batch"
+	"comet/abstraction_service/batch/mq"
 
 	"github.com/hashicorp/golang-lru"
 	"sync"
@@ -20,15 +20,15 @@ type LocalCache struct {
 	cacheWriteLock *sync.Mutex
 	cache *lru.Cache
 
-	predictProducer batch.PredictProducer
-	resultConsumer batch.ResultConsumer
+	predictProducer mq.PredictProducer
+	resultConsumer mq.ResultConsumer
 	
 	// channel per rpc call hash
 	rpcChanMap map[string] chan *comet.PredictResult
 }
 
 // CreateAndStartLocalCache implements MALCache
-func CreateAndStartLocalCache (size int, predictProducer batch.PredictProducer, resultConsumer batch.ResultConsumer) MALCache {
+func CreateAndStartLocalCache (size int, predictProducer mq.PredictProducer, resultConsumer mq.ResultConsumer) MALCache {
 	cache, error := lru.New(size)	
 	if error != nil {
 		lc := LocalCache{

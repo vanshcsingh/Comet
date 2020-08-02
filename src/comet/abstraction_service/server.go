@@ -8,8 +8,11 @@ import (
 	"time"
 
 	"comet/abstraction_service/batch"
+	"comet/abstraction_service/batch/mq"
 	"comet/abstraction_service/cache"
 	"comet/abstraction_service/pb"
+
+	md "comet/metadata_store"
 
 	"google.golang.org/grpc"
 )
@@ -30,18 +33,20 @@ type Server struct {
 // CreateServer creates the receiver server
 func CreateServer() *Server {
 	predictPipe := make(chan *comet.PredictParams)
-	predictConsumer := &batch.LocalPredictConsumer{Pipe: predictPipe}
-	predictProducer := &batch.LocalPredictProducer{Pipe: predictPipe}
+	predictConsumer := &mq.LocalPredictConsumer{Pipe: predictPipe}
+	predictProducer := &mq.LocalPredictProducer{Pipe: predictPipe}
 
 	resultPipe := make(chan *comet.PredictResult)
-	resultConsumer := &batch.LocalResultConsumer{Pipe: resultPipe}
-	resultProducer := &batch.LocalResultProducer{Pipe: resultPipe}
+	resultConsumer := &mq.LocalResultConsumer{Pipe: resultPipe}
+	resultProducer := &mq.LocalResultProducer{Pipe: resultPipe}
 
 	// create and start caching service
 	cache := cache.CreateAndStartLocalCache(cacheSize, predictProducer, resultConsumer)
 
+	mdStore := md.CreateLocalFileBasedMetadataStore("./metadata_store/tmp.json")
+
 	// create and start batcher service
-	batch.CreateAndStartLocalBatcher(predictConsumer, resultProducer, batchThreshold, duration)
+	batch.CreateAndStartLocalBatcher(predictConsumer, resultProducer, batchThreshold, duration, mdStore)
 
 	return &Server {
 		cache: cache,

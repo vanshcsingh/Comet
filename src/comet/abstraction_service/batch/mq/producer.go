@@ -1,4 +1,4 @@
-package batch
+package mq
 
 import (
 	"comet"
@@ -19,9 +19,12 @@ type LocalPredictProducer struct {
 	Pipe chan<- *comet.PredictParams
 }
 
-// Publish publishes to local channel
+// Publish to local channel
 func (p *LocalPredictProducer) Publish(pp *comet.PredictParams) {
-	p.Pipe <- pp
+	// don't block calling thread on publish
+	go func() {
+		p.Pipe <- pp
+	}()
 }
 
 // ResultProducer allows us to develop around this interface
@@ -39,7 +42,10 @@ type LocalResultProducer struct {
 	Pipe chan<- *comet.PredictResult
 }
 
-// Publish publishes to local channel
+// Publish to local channel
 func (p *LocalResultProducer) Publish(res *comet.PredictResult) {
-	p.Pipe <- res
+	// don't block calling thread on publish
+	go func() {
+		p.Pipe <- res
+	}()
 }

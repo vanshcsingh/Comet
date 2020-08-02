@@ -3,6 +3,7 @@ package batch
 import (
 	"comet"
 	md "comet/metadata_store"
+	"comet/abstraction_service/batch/mq"
 
 	"log"
 	"sync"
@@ -17,8 +18,8 @@ type Service interface {
 
 // LocalBatcher local batcher
 type LocalBatcher struct {
-	predictConsumer PredictConsumer
-	resultProducer ResultProducer
+	predictConsumer mq.PredictConsumer
+	resultProducer mq.ResultProducer
 
 	modelLockMap map[comet.ModelIDType] *sync.Mutex
 	modelLockMapLock *sync.Mutex
@@ -33,8 +34,8 @@ type LocalBatcher struct {
 
 // CreateAndStartLocalBatcher creates a local implementation of Service
 func CreateAndStartLocalBatcher(
-	consumer PredictConsumer, 
-	producer ResultProducer, 
+	consumer mq.PredictConsumer, 
+	producer mq.ResultProducer, 
 	batchThreshold int, 
 	duration time.Duration,
 	mdStore md.MetadataStore,
