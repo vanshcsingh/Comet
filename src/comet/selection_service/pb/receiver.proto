@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "pb";
+
+service SelectionService {
+	rpc Query(QueryRequest) returns (QueryReply) {} 
+	rpc Feedback(FeedbackRequest) returns (FeedbackReply) {} 
+}
+
+message QueryRequest {
+	repeated int32 feature_vector = 1;
+	string f_type = 2;
+	int32 x_dim = 3;
+	int32 y_dim = 4;
+	int32 layers = 5;
+	string context_uuid = 6;
+}
+
+message QueryReply {
+	string label = 1;
+	int32 queryID = 2;
+}
+
+message FeedbackRequest {
+	string context_uuid = 1;
+	string queryID = 2;
+	int32 evaluation = 3;
+}
+
+message FeedbackReply {
+	// TODO	
+}
