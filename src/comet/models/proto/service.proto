@@ -1,0 +1,19 @@
+// All models must implement this proto definiton
+// MAL generates clients with this proto to call models
+syntax = "proto3";
+
+service Service {
+	rpc Predict (PredictRequest) returns (PredictReply) {}
+}
+
+message PredictRequest {
+	repeated ImageVector images = 1;
+}
+
+message ImageVector {
+	repeated int32 vector = 1;
+}
+
+message PredictReply {
+	repeated string labels = 1;
+}
