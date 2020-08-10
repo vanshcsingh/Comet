@@ -21,8 +21,9 @@ type LocalModelEntries struct {
 // ModelEntry defines our local metadata json file entries
 type ModelEntry struct {
 	ModelID comet.ModelIDType `json:"model_id"`
-	Addr string `json:"addr"`
+	Port string `json:"port"`
 	Desc string `json:"desc"`
+	DockerContainer string `json:"docker_container"`
 }
 
 // LocalFileBasedMetadataStore loads metadata information from a json file

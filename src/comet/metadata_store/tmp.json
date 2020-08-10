@@ -1,14 +1,16 @@
 {
 	"model_entries": [
 		{
+			"desc": "tensorflow container",
+			"docker_container": "tf-seq-model",
 			"model_id": 1,
-			"addr": "localhost:4000",
-			"desc": "tensorflow container"
+			"port": "4000"
 		},
 		{
+			"desc": "spark container",
+			"docker_container": "spark-seq-model",
 			"model_id": 2,
-			"addr": "localhost:4001",
-			"desc": "spark container"
+			"port": "4001"
 		}
 	]
 }
