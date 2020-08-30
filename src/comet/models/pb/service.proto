@@ -2,6 +2,8 @@
 // MAL generates clients with this proto to call models
 syntax = "proto3";
 
+package pb;
+
 service Service {
 	rpc Predict (PredictRequest) returns (PredictReply) {}
 }

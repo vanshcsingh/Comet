@@ -6,5 +6,5 @@ gopkg.in
 golang.org
 google.golang.org
 .vscode/
-
+.*
 __pycache__

@@ -4,8 +4,10 @@ import (
 	"comet"
 	"comet/abstraction_service/batch/mq"
 	md "comet/metadata_store"
+	"context"
 
-	"log"
+	modelpb "comet/models/pb"
+
 	"sync"
 	"time"
 )
@@ -112,23 +114,37 @@ func (lb *LocalBatcher) extractPredictParams(mID comet.ModelIDType) []*comet.Pre
 	return copyParams
 }
 
-// This function is currently stubbed to test batchPredictCalls
-// It simply publishes a result to a label
+// It performs batched predict calls and publishes labels
 func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet.PredictParams) {
-	log.Println("batching", len(params), "predict calls on model#", mID, "to port: ", lb.mdStore.GetEntry(mID).Port)
-	log.Println("Predict params are: ", params)
-	log.Println("---------------------------------------------")
-	log.Println()
 
-	labels := []string{"hot dog", "not hot dog", "cat"}
-	label := labels[int(mID)%len(labels)]
+	client, err := lb.mdStore.GetClient(mID)
+	if err != nil {
+		panic("Could not get model client")
+	}
+
+	modelImageVectors := make([]*modelpb.ImageVector, 0)
 
 	for _, p := range params {
+		modelImageVectors = append(modelImageVectors, &modelpb.ImageVector{
+			Vector: p.ImageVector,
+		})
+	}
+
+	modelPredictRequest := &modelpb.PredictRequest{Images: modelImageVectors}
+
+	reply, err := client.Predict(
+		context.Background(),
+		modelPredictRequest,
+	)
+
+	// results are ordered in the same way that they were provided
+	for idx, p := range params {
 		lb.resultProducer.Publish(&comet.PredictResult{
-			Label: label,
+			Label: reply.Labels[idx],
 			Hash:  p.Hash,
 		})
 	}
+
 }
 
 // lockOnModelID locks a model's queue on its modelID

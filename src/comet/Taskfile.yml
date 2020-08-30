@@ -30,5 +30,5 @@ tasks:
   build-model-containers:
     # Add other dockerfile locations below
     cmds:
-      - sudo docker build -t tf-seq-model $(git-root)/src/comet/models/tensorflow/model
+      - sudo docker build -t tf-seq-model models/tensorflow/model
 

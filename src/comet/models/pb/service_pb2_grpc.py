@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from models.proto import service_pb2 as models_dot_proto_dot_service__pb2
+from models.pb import service_pb2 as models_dot_pb_dot_service__pb2
 
 
 class ServiceStub(object):
@@ -15,9 +15,9 @@ class ServiceStub(object):
             channel: A grpc.Channel.
         """
         self.Predict = channel.unary_unary(
-                '/Service/Predict',
-                request_serializer=models_dot_proto_dot_service__pb2.PredictRequest.SerializeToString,
-                response_deserializer=models_dot_proto_dot_service__pb2.PredictReply.FromString,
+                '/pb.Service/Predict',
+                request_serializer=models_dot_pb_dot_service__pb2.PredictRequest.SerializeToString,
+                response_deserializer=models_dot_pb_dot_service__pb2.PredictReply.FromString,
                 )
 
 
@@ -35,12 +35,12 @@ def add_ServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Predict': grpc.unary_unary_rpc_method_handler(
                     servicer.Predict,
-                    request_deserializer=models_dot_proto_dot_service__pb2.PredictRequest.FromString,
-                    response_serializer=models_dot_proto_dot_service__pb2.PredictReply.SerializeToString,
+                    request_deserializer=models_dot_pb_dot_service__pb2.PredictRequest.FromString,
+                    response_serializer=models_dot_pb_dot_service__pb2.PredictReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'Service', rpc_method_handlers)
+            'pb.Service', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -59,8 +59,8 @@ class Service(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Service/Predict',
-            models_dot_proto_dot_service__pb2.PredictRequest.SerializeToString,
-            models_dot_proto_dot_service__pb2.PredictReply.FromString,
+        return grpc.experimental.unary_unary(request, target, '/pb.Service/Predict',
+            models_dot_pb_dot_service__pb2.PredictRequest.SerializeToString,
+            models_dot_pb_dot_service__pb2.PredictReply.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

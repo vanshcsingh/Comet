@@ -4,7 +4,7 @@
 			"desc": "tensorflow container",
 			"docker_container": "tf-seq-model",
 			"model_id": 1,
-			"port": "4000"
+			"addr": "localhost:4000"
 		}
 	]
 }
