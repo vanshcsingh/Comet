@@ -2,8 +2,8 @@ package batch
 
 import (
 	"comet"
-	md "comet/metadata_store"
 	"comet/abstraction_service/batch/mq"
+	md "comet/metadata_store"
 
 	"log"
 	"sync"
@@ -19,39 +19,40 @@ type Service interface {
 // LocalBatcher local batcher
 type LocalBatcher struct {
 	predictConsumer mq.PredictConsumer
-	resultProducer mq.ResultProducer
+	resultProducer  mq.ResultProducer
 
-	modelLockMap map[comet.ModelIDType] *sync.Mutex
+	modelLockMap     map[comet.ModelIDType]*sync.Mutex
 	modelLockMapLock *sync.Mutex
-	modelQueue map[comet.ModelIDType] []*comet.PredictParams
+	modelQueue       map[comet.ModelIDType][]*comet.PredictParams
 
-	sendBatchLock *sync.Mutex	
-	sendBatchMap map[comet.ModelIDType] bool
-	sendBatch chan comet.ModelIDType
+	// sendBatch channel alerts us of which model type is ready to send batched RPCs to models
+	sendBatch     chan comet.ModelIDType
+	sendBatchLock *sync.Mutex
+	sendBatchMap  map[comet.ModelIDType]bool
 
 	mdStore md.MetadataStore
 }
 
 // CreateAndStartLocalBatcher creates a local implementation of Service
 func CreateAndStartLocalBatcher(
-	consumer mq.PredictConsumer, 
-	producer mq.ResultProducer, 
-	batchThreshold int, 
+	consumer mq.PredictConsumer,
+	producer mq.ResultProducer,
+	batchThreshold int,
 	duration time.Duration,
 	mdStore md.MetadataStore,
 ) Service {
 	lb := &LocalBatcher{
 		predictConsumer: consumer,
-		resultProducer: producer,
+		resultProducer:  producer,
 
-		modelLockMap: make(map[comet.ModelIDType] *sync.Mutex),
+		modelLockMap:     make(map[comet.ModelIDType]*sync.Mutex),
 		modelLockMapLock: &sync.Mutex{},
-		modelQueue: make(map[comet.ModelIDType] []*comet.PredictParams),
+		modelQueue:       make(map[comet.ModelIDType][]*comet.PredictParams),
 
 		// Channel alerts run thread when to send batch of predict calls
 		sendBatchLock: &sync.Mutex{},
-		sendBatchMap: make(map[comet.ModelIDType] bool),
-		sendBatch: make(chan comet.ModelIDType, 100),
+		sendBatchMap:  make(map[comet.ModelIDType]bool),
+		sendBatch:     make(chan comet.ModelIDType, 100),
 
 		mdStore: mdStore,
 	}
@@ -67,10 +68,10 @@ func (lb *LocalBatcher) Run(batchThreshold int, period time.Duration) {
 	ticker := time.NewTicker(period)
 	for {
 		select {
-		case mID := <- lb.sendBatch:
+		case mID := <-lb.sendBatch:
 			go lb.batchPredictCalls(mID, lb.extractPredictParams(mID))
-			
-		case <- ticker.C:
+
+		case <-ticker.C:
 			for mID := range lb.modelLockMap {
 				go lb.batchPredictCalls(mID, lb.extractPredictParams(mID))
 			}
@@ -83,7 +84,7 @@ func (lb *LocalBatcher) consumerThread(batchThreshold int) {
 	for {
 		// poll from consumer
 		predictParams := lb.predictConsumer.Consume()
-		mID := predictParams.ModelID 
+		mID := predictParams.ModelID
 
 		lb.lockOnModelID(mID)
 		lb.modelQueue[mID] = append(lb.modelQueue[mID], predictParams)
@@ -91,7 +92,7 @@ func (lb *LocalBatcher) consumerThread(batchThreshold int) {
 
 		if len(lb.modelQueue[mID]) > batchThreshold {
 			lb.sendBatchLock.Lock()
-			if ! lb.sendBatchMap[mID] {
+			if !lb.sendBatchMap[mID] {
 				lb.sendBatchMap[mID] = true
 				lb.sendBatch <- mID
 			}
@@ -103,7 +104,7 @@ func (lb *LocalBatcher) consumerThread(batchThreshold int) {
 func (lb *LocalBatcher) extractPredictParams(mID comet.ModelIDType) []*comet.PredictParams {
 	lb.lockOnModelID(mID)
 	copyParams := lb.modelQueue[mID]
-	
+
 	// clear modelQueue for mID
 	lb.modelQueue[mID] = nil
 	lb.unlockOnModelID(mID)
@@ -119,14 +120,13 @@ func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet
 	log.Println("---------------------------------------------")
 	log.Println()
 
-
 	labels := []string{"hot dog", "not hot dog", "cat"}
-	label := labels[int(mID) % len(labels)]
+	label := labels[int(mID)%len(labels)]
 
 	for _, p := range params {
 		lb.resultProducer.Publish(&comet.PredictResult{
 			Label: label,
-			Hash: p.Hash,
+			Hash:  p.Hash,
 		})
 	}
 }

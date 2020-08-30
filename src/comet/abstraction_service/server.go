@@ -19,9 +19,9 @@ import (
 
 const (
 	batchThreshold = 10
-	cacheSize = 3000
-	duration = time.Second * 1
-	port = ":424242"
+	cacheSize      = 3000
+	duration       = time.Second * 1
+	port           = ":424242"
 )
 
 // Server is the MAL server
@@ -41,14 +41,14 @@ func CreateServer() *Server {
 	resultProducer := &mq.LocalResultProducer{Pipe: resultPipe}
 
 	// create and start caching service
-	cache := cache.CreateAndStartLocalCache(cacheSize, predictProducer, resultConsumer)
+	cache, _ := cache.CreateAndStartLocalCache(cacheSize, predictProducer, resultConsumer)
 
 	mdStore := md.CreateLocalFileBasedMetadataStore("./metadata_store/tmp.json")
 
 	// create and start batcher service
 	batch.CreateAndStartLocalBatcher(predictConsumer, resultProducer, batchThreshold, duration, mdStore)
 
-	return &Server {
+	return &Server{
 		cache: cache,
 	}
 }

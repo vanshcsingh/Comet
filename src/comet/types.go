@@ -1,9 +1,9 @@
 package comet
 
 import (
+	malpb "comet/abstraction_service/pb"
 	"crypto/sha256"
 	"fmt"
-	malpb "comet/abstraction_service/pb"
 )
 
 // ModelIDType wraps the type of ModelIDs
@@ -16,30 +16,30 @@ type ImageVectorType []int32
 // the PredictRequest abstraction_service pb
 type PredictParams struct {
 	ImageVector ImageVectorType
-	ModelID ModelIDType
+	ModelID     ModelIDType
 	ContextUUID string
-	Hash string
+	Hash        string
 }
 
 // PredictResult is returned by the batch message queue
 type PredictResult struct {
 	Label string
-	Hash string	
+	Hash  string
 }
 
 // CreatePredictParamsMAL object from a Predict RPC
 func CreatePredictParamsMAL(pr *malpb.PredictRequest) *PredictParams {
 	return &PredictParams{
 		ImageVector: pr.GetImageVector(),
-		ModelID: ModelIDType(pr.GetModelId()),
+		ModelID:     ModelIDType(pr.GetModelId()),
 		ContextUUID: pr.GetContextUuid(),
-		Hash: predictRequestHash(pr),
+		Hash:        predictRequestHash(pr),
 	}
 }
 
 // In the future we can devise hashes that are more injective
 func predictRequestHash(pr *malpb.PredictRequest) string {
 	hash := sha256.New()
-	fmt.Fprint(hash, pr)	
+	fmt.Fprint(hash, pr)
 	return string(hash.Sum(nil))
 }

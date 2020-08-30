@@ -2,6 +2,9 @@ RC_FILE="$HOME/.bashrc"
 
 if [ "$#" -eq 1 ]; then
   RC_FILE="$1"
+else
+  echo "Usage sh ./setup.sh <RC file>"
+  exit 2
 fi
 
 sed -i '/GOPATH=/d' $RC_FILE
