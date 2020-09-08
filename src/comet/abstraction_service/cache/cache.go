@@ -4,6 +4,7 @@ import (
 	"comet"
 	"comet/abstraction_service/batch/mq"
 	"fmt"
+	"log"
 
 	"sync"
 
@@ -50,8 +51,12 @@ func CreateAndStartLocalCache(size int, predictProducer mq.PredictProducer, resu
 
 // Start starts a thread polling the message queue of results
 func (lc *LocalCache) pollResults() {
+	log.Println("[MALCache] pollResults thread has started")
 	for {
 		result := lc.resultConsumer.Consume()
+
+		log.Printf("[MALCache] pollResults consumed result: %v\n", result)
+
 		lc.rpcChanMap[result.Hash] <- result
 	}
 }
@@ -76,6 +81,9 @@ func (lc *LocalCache) Request(predictParams *comet.PredictParams) string {
 	// create channel
 	lc.rpcChanMap[predictParams.Hash] = make(chan *comet.PredictResult)
 	lc.predictProducer.Publish(predictParams)
+
+	log.Printf("[MALCache] published request for mID: %v\n", predictParams.ModelID)
+
 	result := <-lc.rpcChanMap[predictParams.Hash]
 
 	// modify cache

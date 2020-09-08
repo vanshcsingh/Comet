@@ -1,12 +1,13 @@
-package selection_service
+package main
 
 import (
 	"context"
 	"log"
 	"net"
 
-	"google.golang.org/grpc"
 	pb "comet/selection_service/pb"
+
+	"google.golang.org/grpc"
 )
 
 const (

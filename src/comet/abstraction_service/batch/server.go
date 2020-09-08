@@ -6,8 +6,10 @@ import (
 	md "comet/metadata_store"
 	"context"
 
-	modelpb "comet/models/pb"
+	modelpb "comet/models/container_models"
 
+	"fmt"
+	"log"
 	"sync"
 	"time"
 )
@@ -67,6 +69,8 @@ func (lb *LocalBatcher) Run(batchThreshold int, period time.Duration) {
 	// Poll data from predictConsumer
 	go lb.consumerThread(batchThreshold)
 
+	log.Println("[Batcher]: Batcher is starting up")
+
 	ticker := time.NewTicker(period)
 	for {
 		select {
@@ -82,19 +86,26 @@ func (lb *LocalBatcher) Run(batchThreshold int, period time.Duration) {
 }
 
 func (lb *LocalBatcher) consumerThread(batchThreshold int) {
+	log.Println("[Batcher]: consumerThread initialized")
+
 	// forever loop
 	for {
 		// poll from consumer
 		predictParams := lb.predictConsumer.Consume()
 		mID := predictParams.ModelID
 
+		log.Println("[Batcher: consumerThread] inbound params for mID: ", mID)
+
 		lb.lockOnModelID(mID)
 		lb.modelQueue[mID] = append(lb.modelQueue[mID], predictParams)
 		lb.unlockOnModelID(mID)
 
-		if len(lb.modelQueue[mID]) > batchThreshold {
+		log.Println("[Batcher: consumerThread]: model queue has length", len(lb.modelQueue[mID]))
+
+		if len(lb.modelQueue[mID]) >= batchThreshold {
 			lb.sendBatchLock.Lock()
 			if !lb.sendBatchMap[mID] {
+				log.Println("[Batcher: consumerThread] sending batch signal for mID", mID)
 				lb.sendBatchMap[mID] = true
 				lb.sendBatch <- mID
 			}
@@ -117,10 +128,14 @@ func (lb *LocalBatcher) extractPredictParams(mID comet.ModelIDType) []*comet.Pre
 // It performs batched predict calls and publishes labels
 func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet.PredictParams) {
 
+	log.Printf("[Batcher: batchPredictCalls] for mid: %d\n", mID)
+
 	client, err := lb.mdStore.GetClient(mID)
 	if err != nil {
 		panic("Could not get model client")
 	}
+
+	log.Printf("[Batcher: batchPredictionCalls] Received a client: ", client)
 
 	modelImageVectors := make([]*modelpb.ImageVector, 0)
 
@@ -132,10 +147,18 @@ func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet
 
 	modelPredictRequest := &modelpb.PredictRequest{Images: modelImageVectors}
 
+	log.Printf("[Batcher: batchPredictionCalls] about to make a predict call")
+
 	reply, err := client.Predict(
 		context.Background(),
 		modelPredictRequest,
 	)
+
+	log.Printf("[Batcher: batchPredictionCalls] Got a reply back from the client")
+
+	if err != nil {
+		panic(fmt.Sprintf("Received error from making RPC to container: %v", err))
+	}
 
 	// results are ordered in the same way that they were provided
 	for idx, p := range params {
@@ -144,6 +167,10 @@ func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet
 			Hash:  p.Hash,
 		})
 	}
+
+	lb.sendBatchLock.Lock()
+	lb.sendBatchMap[mID] = false
+	lb.sendBatchLock.Unlock()
 
 }
 

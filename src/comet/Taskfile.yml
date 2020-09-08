@@ -7,7 +7,11 @@ version: '3'
 tasks:
   default:
     deps:
-      - task: build
+      - task: install
+
+  install:
+    cmds:
+      - go install ./...
 
   build:
     cmds:
@@ -17,7 +21,7 @@ tasks:
     cmds:
       - go test ./... 
 
-  protoc:
+  go-protoc:
     # to create go stubs for a proto file <file> perform `$ proto=<file> task protoc`
     cmds:
       - protoc --go_out=Mgrpc/service_config/service_config.proto=/internal/proto/grpc_service_config:. --go-grpc_out=Mgrpc/service_config/service_config.proto=/internal/proto/grpc_service_config:. {{.proto}}   --go_opt=paths=source_relative   --go-grpc_opt=paths=source_relative 
@@ -31,4 +35,8 @@ tasks:
     # Add other dockerfile locations below
     cmds:
       - sudo docker build -t tf-seq-model models/tensorflow/model
+  
+  run-tf-model:
+    cmds:
+      - sudo docker run -p 4000:4000 tf-seq-model 4000
 

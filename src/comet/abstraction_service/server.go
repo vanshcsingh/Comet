@@ -1,4 +1,4 @@
-package abstraction_service
+package main
 
 import (
 	"comet"
@@ -18,10 +18,10 @@ import (
 )
 
 const (
-	batchThreshold = 10
+	batchThreshold = 1
 	cacheSize      = 3000
-	duration       = time.Second * 1
-	port           = ":424242"
+	duration       = time.Hour * 1
+	port           = ":4001"
 )
 
 // Server is the MAL server
@@ -66,6 +66,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
+	log.Printf("Abstraction service has started listening on localhost:%s\n", port)
+
 	s := grpc.NewServer()
 	pb.RegisterAbstractionServiceServer(s, CreateServer())
 	if err := s.Serve(lis); err != nil {

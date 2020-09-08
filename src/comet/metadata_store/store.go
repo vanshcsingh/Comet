@@ -1,12 +1,13 @@
-package metadata_store
+package metadatastore
 
 import (
 	"comet"
 
-	modelpb "comet/models/pb"
+	modelpb "comet/models/container_models"
 
 	"encoding/json"
 	"io/ioutil"
+	"log"
 
 	"google.golang.org/grpc"
 )
@@ -34,8 +35,8 @@ type ModelEntry struct {
 // LocalFileBasedMetadataStore loads metadata information from a json file
 type LocalFileBasedMetadataStore struct {
 	clientConnMap map[comet.ModelIDType]grpc.ClientConnInterface
-	midList       []comet.ModelIDType
 	entryMap      map[comet.ModelIDType]ModelEntry
+	midList       []comet.ModelIDType
 }
 
 // CreateLocalFileBasedMetadataStore creates a MetadataStore object from a json file
@@ -53,19 +54,23 @@ func CreateLocalFileBasedMetadataStore(metadataFile string) MetadataStore {
 		panic(err)
 	}
 
-	// list of mids
+	log.Println("[Store:CreateLocalFileBasedMetadataStore] parsed metadata file into map: ", entries)
+
+	// initialize data structures
+	clientConnMap := make(map[comet.ModelIDType]grpc.ClientConnInterface)
+	entryMap := make(map[comet.ModelIDType]ModelEntry)
 	midList := make([]comet.ModelIDType, len(entries.Entries))
 
 	// create addressMap
-	var entryMap map[comet.ModelIDType]ModelEntry
 	for i, entry := range entries.Entries {
 		entryMap[entry.ModelID] = entry
 		midList[i] = entry.ModelID
 	}
 
 	return &LocalFileBasedMetadataStore{
-		entryMap: entryMap,
-		midList:  midList,
+		clientConnMap: clientConnMap,
+		entryMap:      entryMap,
+		midList:       midList,
 	}
 }
 
@@ -82,10 +87,17 @@ func (md *LocalFileBasedMetadataStore) GetEntry(mid comet.ModelIDType) ModelEntr
 // GetClient returns a grpc client for the Model
 func (md *LocalFileBasedMetadataStore) GetClient(mid comet.ModelIDType) (modelpb.ServiceClient, error) {
 	conn, exists := md.clientConnMap[mid]
+
+	log.Println("[Store:GetClient] does a connection exist so far? ", exists)
+
 	var err error
 	if !exists {
 		entry := md.GetEntry(mid)
-		conn, err = grpc.Dial(entry.Addr)
+
+		log.Println("[Store:GetClient] trying to create a connection for: ", entry.Addr)
+		conn, err = grpc.Dial(entry.Addr, grpc.WithInsecure(), grpc.WithBlock())
+
+		log.Println("[Store:GetClient] connection error: ", err)
 	}
 	return modelpb.NewServiceClient(conn), err
 }
