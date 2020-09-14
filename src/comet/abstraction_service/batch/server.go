@@ -141,7 +141,7 @@ func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet
 
 	for _, p := range params {
 		modelImageVectors = append(modelImageVectors, &modelpb.ImageVector{
-			Vector: p.ImageVector,
+			Pixels: p.ImageVector,
 		})
 	}
 

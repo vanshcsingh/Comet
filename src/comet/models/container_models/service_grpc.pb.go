@@ -11,7 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion7
 
 // ServiceClient is the client API for Service service.
 //
@@ -28,6 +28,10 @@ func NewServiceClient(cc grpc.ClientConnInterface) ServiceClient {
 	return &serviceClient{cc}
 }
 
+var servicePredictStreamDesc = &grpc.StreamDesc{
+	StreamName: "Predict",
+}
+
 func (c *serviceClient) Predict(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictReply, error) {
 	out := new(PredictReply)
 	err := c.cc.Invoke(ctx, "/container_models.Service/Predict", in, out, opts...)
@@ -37,54 +41,75 @@ func (c *serviceClient) Predict(ctx context.Context, in *PredictRequest, opts ..
 	return out, nil
 }
 
-// ServiceServer is the server API for Service service.
-// All implementations must embed UnimplementedServiceServer
-// for forward compatibility
-type ServiceServer interface {
-	Predict(context.Context, *PredictRequest) (*PredictReply, error)
-	mustEmbedUnimplementedServiceServer()
+// ServiceService is the service API for Service service.
+// Fields should be assigned to their respective handler implementations only before
+// RegisterServiceService is called.  Any unassigned fields will result in the
+// handler for that method returning an Unimplemented error.
+type ServiceService struct {
+	Predict func(context.Context, *PredictRequest) (*PredictReply, error)
 }
 
-// UnimplementedServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedServiceServer struct {
-}
-
-func (*UnimplementedServiceServer) Predict(context.Context, *PredictRequest) (*PredictReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Predict not implemented")
-}
-func (*UnimplementedServiceServer) mustEmbedUnimplementedServiceServer() {}
-
-func RegisterServiceServer(s *grpc.Server, srv ServiceServer) {
-	s.RegisterService(&_Service_serviceDesc, srv)
-}
-
-func _Service_Predict_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func (s *ServiceService) predict(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PredictRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServiceServer).Predict(ctx, in)
+		return s.Predict(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     srv,
+		Server:     s,
 		FullMethod: "/container_models.Service/Predict",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).Predict(ctx, req.(*PredictRequest))
+		return s.Predict(ctx, req.(*PredictRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _Service_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "container_models.Service",
-	HandlerType: (*ServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Predict",
-			Handler:    _Service_Predict_Handler,
+// RegisterServiceService registers a service implementation with a gRPC server.
+func RegisterServiceService(s grpc.ServiceRegistrar, srv *ServiceService) {
+	srvCopy := *srv
+	if srvCopy.Predict == nil {
+		srvCopy.Predict = func(context.Context, *PredictRequest) (*PredictReply, error) {
+			return nil, status.Errorf(codes.Unimplemented, "method Predict not implemented")
+		}
+	}
+	sd := grpc.ServiceDesc{
+		ServiceName: "container_models.Service",
+		Methods: []grpc.MethodDesc{
+			{
+				MethodName: "Predict",
+				Handler:    srvCopy.predict,
+			},
 		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "models/container_models/service.proto",
+		Streams:  []grpc.StreamDesc{},
+		Metadata: "models/container_models/service.proto",
+	}
+
+	s.RegisterService(&sd, nil)
+}
+
+// NewServiceService creates a new ServiceService containing the
+// implemented methods of the Service service in s.  Any unimplemented
+// methods will result in the gRPC server returning an UNIMPLEMENTED status to the client.
+// This includes situations where the method handler is misspelled or has the wrong
+// signature.  For this reason, this function should be used with great care and
+// is not recommended to be used by most users.
+func NewServiceService(s interface{}) *ServiceService {
+	ns := &ServiceService{}
+	if h, ok := s.(interface {
+		Predict(context.Context, *PredictRequest) (*PredictReply, error)
+	}); ok {
+		ns.Predict = h.Predict
+	}
+	return ns
+}
+
+// UnstableServiceService is the service API for Service service.
+// New methods may be added to this interface if they are added to the service
+// definition, which is not a backward-compatible change.  For this reason,
+// use of this type is not recommended.
+type UnstableServiceService interface {
+	Predict(context.Context, *PredictRequest) (*PredictReply, error)
 }

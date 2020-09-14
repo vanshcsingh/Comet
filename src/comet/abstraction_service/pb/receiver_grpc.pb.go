@@ -11,7 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion7
 
 // AbstractionServiceClient is the client API for AbstractionService service.
 //
@@ -28,6 +28,10 @@ func NewAbstractionServiceClient(cc grpc.ClientConnInterface) AbstractionService
 	return &abstractionServiceClient{cc}
 }
 
+var abstractionServicePredictStreamDesc = &grpc.StreamDesc{
+	StreamName: "Predict",
+}
+
 func (c *abstractionServiceClient) Predict(ctx context.Context, in *PredictRequest, opts ...grpc.CallOption) (*PredictReply, error) {
 	out := new(PredictReply)
 	err := c.cc.Invoke(ctx, "/pb.AbstractionService/Predict", in, out, opts...)
@@ -37,54 +41,75 @@ func (c *abstractionServiceClient) Predict(ctx context.Context, in *PredictReque
 	return out, nil
 }
 
-// AbstractionServiceServer is the server API for AbstractionService service.
-// All implementations must embed UnimplementedAbstractionServiceServer
-// for forward compatibility
-type AbstractionServiceServer interface {
-	Predict(context.Context, *PredictRequest) (*PredictReply, error)
-	mustEmbedUnimplementedAbstractionServiceServer()
+// AbstractionServiceService is the service API for AbstractionService service.
+// Fields should be assigned to their respective handler implementations only before
+// RegisterAbstractionServiceService is called.  Any unassigned fields will result in the
+// handler for that method returning an Unimplemented error.
+type AbstractionServiceService struct {
+	Predict func(context.Context, *PredictRequest) (*PredictReply, error)
 }
 
-// UnimplementedAbstractionServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedAbstractionServiceServer struct {
-}
-
-func (*UnimplementedAbstractionServiceServer) Predict(context.Context, *PredictRequest) (*PredictReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Predict not implemented")
-}
-func (*UnimplementedAbstractionServiceServer) mustEmbedUnimplementedAbstractionServiceServer() {}
-
-func RegisterAbstractionServiceServer(s *grpc.Server, srv AbstractionServiceServer) {
-	s.RegisterService(&_AbstractionService_serviceDesc, srv)
-}
-
-func _AbstractionService_Predict_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func (s *AbstractionServiceService) predict(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PredictRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AbstractionServiceServer).Predict(ctx, in)
+		return s.Predict(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     srv,
+		Server:     s,
 		FullMethod: "/pb.AbstractionService/Predict",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AbstractionServiceServer).Predict(ctx, req.(*PredictRequest))
+		return s.Predict(ctx, req.(*PredictRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _AbstractionService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.AbstractionService",
-	HandlerType: (*AbstractionServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Predict",
-			Handler:    _AbstractionService_Predict_Handler,
+// RegisterAbstractionServiceService registers a service implementation with a gRPC server.
+func RegisterAbstractionServiceService(s grpc.ServiceRegistrar, srv *AbstractionServiceService) {
+	srvCopy := *srv
+	if srvCopy.Predict == nil {
+		srvCopy.Predict = func(context.Context, *PredictRequest) (*PredictReply, error) {
+			return nil, status.Errorf(codes.Unimplemented, "method Predict not implemented")
+		}
+	}
+	sd := grpc.ServiceDesc{
+		ServiceName: "pb.AbstractionService",
+		Methods: []grpc.MethodDesc{
+			{
+				MethodName: "Predict",
+				Handler:    srvCopy.predict,
+			},
 		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "abstraction_service/pb/receiver.proto",
+		Streams:  []grpc.StreamDesc{},
+		Metadata: "abstraction_service/pb/receiver.proto",
+	}
+
+	s.RegisterService(&sd, nil)
+}
+
+// NewAbstractionServiceService creates a new AbstractionServiceService containing the
+// implemented methods of the AbstractionService service in s.  Any unimplemented
+// methods will result in the gRPC server returning an UNIMPLEMENTED status to the client.
+// This includes situations where the method handler is misspelled or has the wrong
+// signature.  For this reason, this function should be used with great care and
+// is not recommended to be used by most users.
+func NewAbstractionServiceService(s interface{}) *AbstractionServiceService {
+	ns := &AbstractionServiceService{}
+	if h, ok := s.(interface {
+		Predict(context.Context, *PredictRequest) (*PredictReply, error)
+	}); ok {
+		ns.Predict = h.Predict
+	}
+	return ns
+}
+
+// UnstableAbstractionServiceService is the service API for AbstractionService service.
+// New methods may be added to this interface if they are added to the service
+// definition, which is not a backward-compatible change.  For this reason,
+// use of this type is not recommended.
+type UnstableAbstractionServiceService interface {
+	Predict(context.Context, *PredictRequest) (*PredictReply, error)
 }

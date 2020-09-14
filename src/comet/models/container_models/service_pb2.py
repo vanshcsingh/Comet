@@ -17,9 +17,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='models/container_models/service.proto',
   package='container_models',
   syntax='proto3',
-  serialized_options=None,
+  serialized_options=b'Z\027models/container_models',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n%models/container_models/service.proto\x12\x10\x63ontainer_models\"?\n\x0ePredictRequest\x12-\n\x06images\x18\x01 \x03(\x0b\x32\x1d.container_models.ImageVector\"\x1d\n\x0bImageVector\x12\x0e\n\x06vector\x18\x01 \x03(\x05\"\x1e\n\x0cPredictReply\x12\x0e\n\x06labels\x18\x01 \x03(\t2X\n\x07Service\x12M\n\x07Predict\x12 .container_models.PredictRequest\x1a\x1e.container_models.PredictReply\"\x00\x62\x06proto3'
+  serialized_pb=b'\n%models/container_models/service.proto\x12\x10\x63ontainer_models\"?\n\x0ePredictRequest\x12-\n\x06images\x18\x01 \x03(\x0b\x32\x1d.container_models.ImageVector\"\x1d\n\x0bImageVector\x12\x0e\n\x06pixels\x18\x01 \x03(\x05\"\x1e\n\x0cPredictReply\x12\x0e\n\x06labels\x18\x01 \x03(\t2X\n\x07Service\x12M\n\x07Predict\x12 .container_models.PredictRequest\x1a\x1e.container_models.PredictReply\"\x00\x42\x19Z\x17models/container_modelsb\x06proto3'
 )
 
 
@@ -66,7 +66,7 @@ _IMAGEVECTOR = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='vector', full_name='container_models.ImageVector.vector', index=0,
+      name='pixels', full_name='container_models.ImageVector.pixels', index=0,
       number=1, type=5, cpp_type=1, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -148,6 +148,7 @@ PredictReply = _reflection.GeneratedProtocolMessageType('PredictReply', (_messag
 _sym_db.RegisterMessage(PredictReply)
 
 
+DESCRIPTOR._options = None
 
 _SERVICE = _descriptor.ServiceDescriptor(
   name='Service',

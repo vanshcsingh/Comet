@@ -14,7 +14,7 @@ message PredictRequest {
 }
 
 message ImageVector {
-	repeated int32 vector = 1;
+	repeated int32 pixels = 1;
 }
 
 message PredictReply {

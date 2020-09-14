@@ -26,7 +26,7 @@ const (
 
 // Server is the MAL server
 type Server struct {
-	pb.UnimplementedAbstractionServiceServer
+	pb.AbstractionServiceService
 	cache cache.MALCache
 }
 
@@ -69,9 +69,11 @@ func main() {
 
 	log.Printf("Abstraction service has started listening on localhost:%s\n", port)
 
-	s := grpc.NewServer()
-	pb.RegisterAbstractionServiceServer(s, CreateServer())
-	if err := s.Serve(lis); err != nil {
+	grpcServer := grpc.NewServer()
+	abstractionService := pb.NewAbstractionServiceService(CreateServer())
+
+	pb.RegisterAbstractionServiceService(grpcServer, abstractionService)
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
