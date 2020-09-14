@@ -55,7 +55,7 @@ func (lc *LocalCache) pollResults() {
 	for {
 		result := lc.resultConsumer.Consume()
 
-		log.Printf("[MALCache] pollResults consumed result: %v\n", result)
+		log.Printf("[MALCache] pollResults consumed result: %v\n", result.Label)
 
 		lc.rpcChanMap[result.Hash] <- result
 	}

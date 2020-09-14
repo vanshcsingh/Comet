@@ -154,7 +154,7 @@ func (lb *LocalBatcher) batchPredictCalls(mID comet.ModelIDType, params []*comet
 		modelPredictRequest,
 	)
 
-	log.Printf("[Batcher: batchPredictionCalls] Got a reply back from the client")
+	log.Println("[Batcher: batchPredictionCalls] Got a reply back from the client")
 
 	if err != nil {
 		panic(fmt.Sprintf("Received error from making RPC to container: %v", err))
