@@ -16,7 +16,7 @@ const (
 
 // Server is the MSL server
 type Server struct {
-	pb.SelectionServiceServer
+	pb.SelectionServiceService
 }
 
 // Query takes in a context hash and a set of features, it returns a query ID
@@ -34,9 +34,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	pb.RegisterSelectionServiceServer(s, &Server{})
-	if err := s.Serve(lis); err != nil {
+	grpcServer := grpc.NewServer()
+	selectionService := pb.NewSelectionServiceService(&Server{})
+
+	pb.RegisterSelectionServiceService(grpcServer, selectionService)
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }

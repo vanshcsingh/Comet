@@ -11,7 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
+const _ = grpc.SupportPackageIsVersion7
 
 // SelectionServiceClient is the client API for SelectionService service.
 //
@@ -29,6 +29,10 @@ func NewSelectionServiceClient(cc grpc.ClientConnInterface) SelectionServiceClie
 	return &selectionServiceClient{cc}
 }
 
+var selectionServiceQueryStreamDesc = &grpc.StreamDesc{
+	StreamName: "Query",
+}
+
 func (c *selectionServiceClient) Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryReply, error) {
 	out := new(QueryReply)
 	err := c.cc.Invoke(ctx, "/pb.SelectionService/Query", in, out, opts...)
@@ -36,6 +40,10 @@ func (c *selectionServiceClient) Query(ctx context.Context, in *QueryRequest, op
 		return nil, err
 	}
 	return out, nil
+}
+
+var selectionServiceFeedbackStreamDesc = &grpc.StreamDesc{
+	StreamName: "Feedback",
 }
 
 func (c *selectionServiceClient) Feedback(ctx context.Context, in *FeedbackRequest, opts ...grpc.CallOption) (*FeedbackReply, error) {
@@ -47,80 +55,108 @@ func (c *selectionServiceClient) Feedback(ctx context.Context, in *FeedbackReque
 	return out, nil
 }
 
-// SelectionServiceServer is the server API for SelectionService service.
-// All implementations must embed UnimplementedSelectionServiceServer
-// for forward compatibility
-type SelectionServiceServer interface {
-	Query(context.Context, *QueryRequest) (*QueryReply, error)
-	Feedback(context.Context, *FeedbackRequest) (*FeedbackReply, error)
-	mustEmbedUnimplementedSelectionServiceServer()
+// SelectionServiceService is the service API for SelectionService service.
+// Fields should be assigned to their respective handler implementations only before
+// RegisterSelectionServiceService is called.  Any unassigned fields will result in the
+// handler for that method returning an Unimplemented error.
+type SelectionServiceService struct {
+	Query    func(context.Context, *QueryRequest) (*QueryReply, error)
+	Feedback func(context.Context, *FeedbackRequest) (*FeedbackReply, error)
 }
 
-// UnimplementedSelectionServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedSelectionServiceServer struct {
-}
-
-func (*UnimplementedSelectionServiceServer) Query(context.Context, *QueryRequest) (*QueryReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
-}
-func (*UnimplementedSelectionServiceServer) Feedback(context.Context, *FeedbackRequest) (*FeedbackReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Feedback not implemented")
-}
-func (*UnimplementedSelectionServiceServer) mustEmbedUnimplementedSelectionServiceServer() {}
-
-func RegisterSelectionServiceServer(s *grpc.Server, srv SelectionServiceServer) {
-	s.RegisterService(&_SelectionService_serviceDesc, srv)
-}
-
-func _SelectionService_Query_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func (s *SelectionServiceService) query(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SelectionServiceServer).Query(ctx, in)
+		return s.Query(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     srv,
+		Server:     s,
 		FullMethod: "/pb.SelectionService/Query",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SelectionServiceServer).Query(ctx, req.(*QueryRequest))
+		return s.Query(ctx, req.(*QueryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
-
-func _SelectionService_Feedback_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func (s *SelectionServiceService) feedback(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FeedbackRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SelectionServiceServer).Feedback(ctx, in)
+		return s.Feedback(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     srv,
+		Server:     s,
 		FullMethod: "/pb.SelectionService/Feedback",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SelectionServiceServer).Feedback(ctx, req.(*FeedbackRequest))
+		return s.Feedback(ctx, req.(*FeedbackRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-var _SelectionService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.SelectionService",
-	HandlerType: (*SelectionServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Query",
-			Handler:    _SelectionService_Query_Handler,
+// RegisterSelectionServiceService registers a service implementation with a gRPC server.
+func RegisterSelectionServiceService(s grpc.ServiceRegistrar, srv *SelectionServiceService) {
+	srvCopy := *srv
+	if srvCopy.Query == nil {
+		srvCopy.Query = func(context.Context, *QueryRequest) (*QueryReply, error) {
+			return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
+		}
+	}
+	if srvCopy.Feedback == nil {
+		srvCopy.Feedback = func(context.Context, *FeedbackRequest) (*FeedbackReply, error) {
+			return nil, status.Errorf(codes.Unimplemented, "method Feedback not implemented")
+		}
+	}
+	sd := grpc.ServiceDesc{
+		ServiceName: "pb.SelectionService",
+		Methods: []grpc.MethodDesc{
+			{
+				MethodName: "Query",
+				Handler:    srvCopy.query,
+			},
+			{
+				MethodName: "Feedback",
+				Handler:    srvCopy.feedback,
+			},
 		},
-		{
-			MethodName: "Feedback",
-			Handler:    _SelectionService_Feedback_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "selection_service/pb/receiver.proto",
+		Streams:  []grpc.StreamDesc{},
+		Metadata: "selection_service/pb/receiver.proto",
+	}
+
+	s.RegisterService(&sd, nil)
+}
+
+// NewSelectionServiceService creates a new SelectionServiceService containing the
+// implemented methods of the SelectionService service in s.  Any unimplemented
+// methods will result in the gRPC server returning an UNIMPLEMENTED status to the client.
+// This includes situations where the method handler is misspelled or has the wrong
+// signature.  For this reason, this function should be used with great care and
+// is not recommended to be used by most users.
+func NewSelectionServiceService(s interface{}) *SelectionServiceService {
+	ns := &SelectionServiceService{}
+	if h, ok := s.(interface {
+		Query(context.Context, *QueryRequest) (*QueryReply, error)
+	}); ok {
+		ns.Query = h.Query
+	}
+	if h, ok := s.(interface {
+		Feedback(context.Context, *FeedbackRequest) (*FeedbackReply, error)
+	}); ok {
+		ns.Feedback = h.Feedback
+	}
+	return ns
+}
+
+// UnstableSelectionServiceService is the service API for SelectionService service.
+// New methods may be added to this interface if they are added to the service
+// definition, which is not a backward-compatible change.  For this reason,
+// use of this type is not recommended.
+type UnstableSelectionServiceService interface {
+	Query(context.Context, *QueryRequest) (*QueryReply, error)
+	Feedback(context.Context, *FeedbackRequest) (*FeedbackReply, error)
 }

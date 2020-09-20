@@ -5,6 +5,7 @@ github.com
 gopkg.in
 golang.org
 google.golang.org
+cloud.google.com
 .vscode/
 .*
 __pycache__

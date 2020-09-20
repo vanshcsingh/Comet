@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package pb;
 
-option go_package = "pb";
+option go_package = "selection_service/pb";
 
 service SelectionService {
 	rpc Query(QueryRequest) returns (QueryReply) {} 
@@ -10,11 +10,8 @@ service SelectionService {
 }
 
 message QueryRequest {
-	repeated int32 feature_vector = 1;
+	repeated int32 image_vector = 1;
 	string f_type = 2;
-	int32 x_dim = 3;
-	int32 y_dim = 4;
-	int32 layers = 5;
 	string context_uuid = 6;
 }
 

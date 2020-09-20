@@ -7,7 +7,7 @@ import (
 )
 
 // ModelIDType wraps the type of ModelIDs
-type ModelIDType int32
+type ModelIDType int
 
 // ImageVectorType defines an MNIST image type
 type ImageVectorType []int32
