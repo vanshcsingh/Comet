@@ -1,5 +1,5 @@
 # Comet
-An online prediction serving system based on Clipper
+An online prediction serving system based on [Clipper](https://www.usenix.org/system/files/conference/nsdi17/nsdi17-crankshaw.pdf)
 
 # Setup
 Update your GOBIN/GOPATH definitions by running `setup.sh`
