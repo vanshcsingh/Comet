@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"sort"
 	"sync"
+	"time"
 )
 
 // Exp4 algorithm as described by Auer et al in http://rob.schapire.net/papers/AuerCeFrSc01.pdf
@@ -27,14 +28,36 @@ type Exp4 struct {
 	// Array of N ModelIds that act as our Advisors
 	Advisors []comet.ModelIDType
 
-	// Weights for our K actions
-	Weights       []float64
+	// Weights for our N advisors
+	Weights []float64
+
+	// Probabilities for our K actions
 	Probabilities []float64
 
 	// Used for sampling from our distribution
 	CumulativeProbabilities []float64
 
 	AbstractionService malpb.AbstractionServiceClient
+}
+
+// CreateExp4 returns an exp4 single selection policy
+func CreateExp4(gamma float64, numLabels int, numAdvisors int, malClient malpb.AbstractionServiceClient) EnsembleSelectionPolicy {
+
+	// initialize all weights to 1
+	weights := make([]float64, numAdvisors)
+	for i := 0; i < numAdvisors; i++ {
+		weights[i] = 1
+	}
+
+	return &Exp4{
+		Gamma:                   gamma,
+		K:                       numLabels,
+		N:                       numAdvisors,
+		Weights:                 weights,
+		Probabilities:           make([]float64, numLabels),
+		CumulativeProbabilities: make([]float64, numLabels+1),
+		AbstractionService:      malClient,
+	}
 }
 
 // Select for Exp4 is written as per Auer
@@ -63,20 +86,19 @@ func (e *Exp4) Select(ctx context.Context, contextuuid string, imageVector comet
 	}
 }
 
-// Feedback updates the weights of the Exp4 policy
-func (e *Exp4) Feedback(ensembleSelection *EnsembleSelection, prediction string, actual string) {
+// Feedback updates the weights of the Exp4 policy. Returns if model predicted correctly
+func (e *Exp4) Feedback(ensembleSelection *EnsembleSelection, actual string) bool {
 	var reward float64 = 0
-	if prediction == actual {
+	if ensembleSelection.PredictionLabel == actual {
 		reward = 1
 	}
 
-	estimatedReward := reward / ensembleSelection.Probability
-
-	for idx := range e.Advisors {
+	for idx, advice := range ensembleSelection.Advice {
+		estimatedReward := reward * advice / ensembleSelection.Probability
 		e.Weights[idx] *= math.Exp(estimatedReward * e.Gamma / float64(e.K))
 	}
 
-	e.Weights[int(ensembleSelection.ModelID)] *= math.Exp(estimatedReward * e.Gamma / float64(e.K))
+	return reward > 0
 }
 
 func (e *Exp4) updateProbabilities(adviceVectors [][]float64) {
@@ -89,11 +111,13 @@ func (e *Exp4) updateProbabilities(adviceVectors [][]float64) {
 
 	// update cumulative probabilities sum
 	var currProbabilitySum float64 = 0
-	for idx := range e.Weights {
+
+	// iterate through all K actions
+	for idx := 0; idx < e.K; idx++ {
 
 		var recommendationWeight float64 = 0
 		for advIdx := range e.Advisors {
-			recommendationWeight += adviceVectors[advIdx][idx]
+			recommendationWeight += adviceVectors[advIdx][idx] * e.Weights[advIdx]
 		}
 
 		exploitationFactor := (1 - e.Gamma) * recommendationWeight / weightSum
@@ -137,7 +161,8 @@ func (e *Exp4) getAdviceVectors(ctx context.Context, contextuuid string, imageVe
 
 	for idx, modelID := range e.Advisors {
 		go func(i int, m comet.ModelIDType) {
-			reply, err := e.AbstractionService.Predict(ctx, &malpb.PredictRequest{
+			ctxWithTimeout, _ := context.WithTimeout(ctx, time.Second)
+			reply, err := e.AbstractionService.Predict(ctxWithTimeout, &malpb.PredictRequest{
 				ImageVector: comet.ImageVectorType(imageVector),
 				ModelId:     int32(m),
 				ContextUuid: contextuuid,

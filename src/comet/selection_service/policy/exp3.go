@@ -29,6 +29,25 @@ type Exp3 struct {
 	AbstractionService malpb.AbstractionServiceClient
 }
 
+// CreateExp3 returns an exp3 single selection policy
+func CreateExp3(gamma float64, numActions int, malClient malpb.AbstractionServiceClient) SingleSelectionPolicy {
+
+	// initialize all weights to 1
+	weights := make([]float64, numActions)
+	for i := 0; i < numActions; i++ {
+		weights[i] = 1
+	}
+
+	return &Exp3{
+		Gamma:                   gamma,
+		K:                       numActions,
+		Weights:                 weights,
+		Probabilities:           make([]float64, numActions),
+		CumulativeProbabilities: make([]float64, numActions+1),
+		AbstractionService:      malClient,
+	}
+}
+
 // Select for Exp3 is written as per Panagiotopoulou
 func (e *Exp3) Select(ctx context.Context, contextuuid string, imageVector comet.ImageVectorType) *SingleSelection {
 
@@ -52,8 +71,8 @@ func (e *Exp3) Select(ctx context.Context, contextuuid string, imageVector comet
 	}
 }
 
-// Feedback updates the weights of the Exp3 Policy
-func (e *Exp3) Feedback(singleSelection *SingleSelection, actual string) {
+// Feedback updates the weights of the Exp3 Policy. Returns if model predicted correctly
+func (e *Exp3) Feedback(singleSelection *SingleSelection, actual string) bool {
 	var reward float64 = 0
 	if singleSelection.PredictionLabel == actual {
 		reward = 1
@@ -61,6 +80,8 @@ func (e *Exp3) Feedback(singleSelection *SingleSelection, actual string) {
 
 	estimatedReward := reward / singleSelection.Probability
 	e.Weights[int(singleSelection.ModelID)] *= math.Exp(estimatedReward * e.Gamma / float64(e.K))
+
+	return reward > 0
 }
 
 func (e *Exp3) updateProbabilities() {

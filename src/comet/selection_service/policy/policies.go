@@ -9,6 +9,7 @@ import (
 type SingleSelection struct {
 	ModelID         comet.ModelIDType
 	PredictionLabel string
+	ActionID        int
 	Probability     float64
 }
 
@@ -18,7 +19,8 @@ type EnsembleSelection struct {
 	SingleSelection
 
 	// Advice[idx] corresponds to the advice given by the idx Advisor on the selection
-	Advice []float64
+	Advice        []float64
+	Probabilities []float64
 }
 
 // SingleSelectionPolicy is for policies that return the result of a single model
