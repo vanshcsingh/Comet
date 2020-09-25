@@ -87,11 +87,8 @@ func (e *Exp4) Select(ctx context.Context, contextuuid string, imageVector comet
 }
 
 // Feedback updates the weights of the Exp4 policy. Returns if model predicted correctly
-func (e *Exp4) Feedback(ensembleSelection *EnsembleSelection, actual string) bool {
-	var reward float64 = 0
-	if ensembleSelection.PredictionLabel == actual {
-		reward = 1
-	}
+func (e *Exp4) Feedback(ensembleSelection *EnsembleSelection, rewardInt int32) bool {
+	reward := float64(rewardInt)
 
 	for idx, advice := range ensembleSelection.Advice {
 		estimatedReward := reward * advice / ensembleSelection.Probability

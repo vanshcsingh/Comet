@@ -26,11 +26,11 @@ type EnsembleSelection struct {
 // SingleSelectionPolicy is for policies that return the result of a single model
 type SingleSelectionPolicy interface {
 	Select(ctx context.Context, contextuuid string, imageVector comet.ImageVectorType) *SingleSelection
-	Feedback(singleSelection *SingleSelection, actual string) bool
+	Feedback(singleSelection *SingleSelection, rewardInt int32) bool
 }
 
 // EnsembleSelectionPolicy is for policies that ensemble the results of multiple models
 type EnsembleSelectionPolicy interface {
 	Select(ctx context.Context, contextuuid string, imageVector comet.ImageVectorType) *EnsembleSelection
-	Feedback(ensembleSelection *EnsembleSelection, actual string) bool
+	Feedback(ensembleSelection *EnsembleSelection, rewardInt int32) bool
 }

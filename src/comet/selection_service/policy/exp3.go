@@ -72,11 +72,8 @@ func (e *Exp3) Select(ctx context.Context, contextuuid string, imageVector comet
 }
 
 // Feedback updates the weights of the Exp3 Policy. Returns if model predicted correctly
-func (e *Exp3) Feedback(singleSelection *SingleSelection, actual string) bool {
-	var reward float64 = 0
-	if singleSelection.PredictionLabel == actual {
-		reward = 1
-	}
+func (e *Exp3) Feedback(singleSelection *SingleSelection, rewardInt int32) bool {
+	reward := float64(rewardInt)
 
 	estimatedReward := reward / singleSelection.Probability
 	e.Weights[int(singleSelection.ModelID)] *= math.Exp(estimatedReward * e.Gamma / float64(e.K))
