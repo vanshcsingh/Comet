@@ -5,18 +5,28 @@ import (
 	"log"
 	"net"
 
+	md "comet/metadata_store"
 	pb "comet/selection_service/pb"
+	"comet/selection_service/sessiondb"
 
 	"google.golang.org/grpc"
-)
-
-const (
-	port = ":424242"
 )
 
 // Server is the MSL server
 type Server struct {
 	pb.SelectionServiceService
+
+	db sessiondb.SessionDB
+}
+
+// InitSelectionService initializes a selection service server
+func InitSelectionService() *Server {
+	// create local db
+	localdb := sessiondb.CreateLocalDB()
+
+	return &Server{
+		db: localdb,
+	}
 }
 
 // Query takes in a context hash and a set of features, it returns a query ID
@@ -30,7 +40,8 @@ func (s *Server) Feedback(context context.Context, request *pb.FeedbackRequest) 
 }
 
 func main() {
-	lis, err := net.Listen("tcp", port)
+	addr := md.GetMetadataStoreInstance().GetSelectionServiceAddr()
+	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

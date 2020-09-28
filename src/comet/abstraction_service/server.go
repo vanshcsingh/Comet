@@ -21,7 +21,6 @@ const (
 	batchThreshold = 1
 	cacheSize      = 3000
 	duration       = time.Hour * 1
-	port           = ":4001"
 )
 
 // Server is the MAL server
@@ -43,7 +42,7 @@ func CreateServer() *Server {
 	// create and start caching service
 	cache, _ := cache.CreateAndStartLocalCache(cacheSize, predictProducer, resultConsumer)
 
-	mdStore := md.CreateLocalFileBasedMetadataStore("./metadata_store/tmp.json")
+	mdStore := md.GetMetadataStoreInstance()
 
 	// create and start batcher service
 	batch.CreateAndStartLocalBatcher(predictConsumer, resultProducer, batchThreshold, duration, mdStore)
@@ -62,12 +61,14 @@ func (s *Server) Predict(ctx context.Context, pr *pb.PredictRequest) (*pb.Predic
 }
 
 func main() {
-	lis, err := net.Listen("tcp", port)
+
+	addr := md.GetMetadataStoreInstance().GetAbstractionServiceAddr()
+	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	log.Printf("Abstraction service has started listening on localhost:%s\n", port)
+	log.Printf("Abstraction service has started listening on %s\n", addr)
 
 	grpcServer := grpc.NewServer()
 	abstractionService := pb.NewAbstractionServiceService(CreateServer())

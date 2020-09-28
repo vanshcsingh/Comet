@@ -30,20 +30,20 @@ type Exp3 struct {
 }
 
 // CreateExp3 returns an exp3 single selection policy
-func CreateExp3(gamma float64, numActions int, malClient malpb.AbstractionServiceClient) SingleSelectionPolicy {
+func CreateExp3(gamma float64, numModels int, malClient malpb.AbstractionServiceClient) SingleSelectionPolicy {
 
 	// initialize all weights to 1
-	weights := make([]float64, numActions)
-	for i := 0; i < numActions; i++ {
+	weights := make([]float64, numModels)
+	for i := 0; i < numModels; i++ {
 		weights[i] = 1
 	}
 
 	return &Exp3{
 		Gamma:                   gamma,
-		K:                       numActions,
+		K:                       numModels,
 		Weights:                 weights,
-		Probabilities:           make([]float64, numActions),
-		CumulativeProbabilities: make([]float64, numActions+1),
+		Probabilities:           make([]float64, numModels),
+		CumulativeProbabilities: make([]float64, numModels+1),
 		AbstractionService:      malClient,
 	}
 }

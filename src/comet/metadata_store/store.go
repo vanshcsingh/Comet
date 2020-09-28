@@ -1,4 +1,4 @@
-package metadatastore
+package metadata_store
 
 import (
 	"comet"
@@ -17,11 +17,22 @@ type MetadataStore interface {
 	GetMIDs() []comet.ModelIDType
 	GetEntry(comet.ModelIDType) ModelEntry
 	GetClient(comet.ModelIDType) (modelpb.ServiceClient, error)
+
+	LabelToVector(string) ([]float64, error)
+	VectorToLabel([]float64) (string, error)
+
+	GetNumModels() int
+	GetNumLabels() int
+	GetSelectionGamma() float64
+	GetAbstractionServiceAddr() string
+	GetSelectionServiceAddr() string
 }
 
-// LocalModelEntries struct contains a list of ModelEntry objects
-type LocalModelEntries struct {
-	Entries []ModelEntry `json:"model_entries"`
+// LocalMdStoreSettings struct contains a list of ModelEntry objects
+type LocalMdStoreSettings struct {
+	Entries   []ModelEntry    `json:"model_entries"`
+	Addresses ServiceAddress  `json:"service_addresses"`
+	MSLParams SelectionParams `json:"selection_params"`
 }
 
 // ModelEntry defines our local metadata json file entries
@@ -32,15 +43,41 @@ type ModelEntry struct {
 	DockerContainer string            `json:"docker_container"`
 }
 
+// ServiceAddress struct stores the addresses for MAL and MSL
+type ServiceAddress struct {
+	AbstractionService string `json:"abstraction_service"`
+	SelectionService   string `json:"selection_service"`
+}
+
+// SelectionParams stores the labels and exploration factor for MSL
+type SelectionParams struct {
+	Labels []string `json:"labels`
+	Gamma  float64  `json:"gamma"`
+}
+
 // LocalFileBasedMetadataStore loads metadata information from a json file
 type LocalFileBasedMetadataStore struct {
 	clientConnMap map[comet.ModelIDType]grpc.ClientConnInterface
 	entryMap      map[comet.ModelIDType]ModelEntry
 	midList       []comet.ModelIDType
+
+	abstractionServiceAddr string
+	selectionServiceAddr   string
+	selectionParams        SelectionParams
 }
 
-// CreateLocalFileBasedMetadataStore creates a MetadataStore object from a json file
-func CreateLocalFileBasedMetadataStore(metadataFile string) MetadataStore {
+// instance for singleton
+var instance MetadataStore
+
+func GetMetadataStoreInstance() MetadataStore {
+	if instance == nil {
+		instance = createLocalFileBasedMetadataStore("./metadata_store/tmp.json")
+	}
+	return instance
+}
+
+// createLocalFileBasedMetadataStore creates a MetadataStore object from a json file
+func createLocalFileBasedMetadataStore(metadataFile string) MetadataStore {
 
 	// Load file contents. Panic if error
 	dat, err := ioutil.ReadFile(metadataFile)
@@ -48,13 +85,13 @@ func CreateLocalFileBasedMetadataStore(metadataFile string) MetadataStore {
 		panic(err)
 	}
 
-	// unmarshal file contents into LocalModelEntries
-	var entries LocalModelEntries
+	// unmarshal file contents into LocalMdStoreSettings
+	var entries LocalMdStoreSettings
 	if err = json.Unmarshal(dat, &entries); err != nil {
 		panic(err)
 	}
 
-	log.Println("[Store:CreateLocalFileBasedMetadataStore] parsed metadata file into map: ", entries)
+	log.Println("[Store:createLocalFileBasedMetadataStore] parsed metadata file into map: ", entries)
 
 	// initialize data structures
 	clientConnMap := make(map[comet.ModelIDType]grpc.ClientConnInterface)
@@ -68,36 +105,11 @@ func CreateLocalFileBasedMetadataStore(metadataFile string) MetadataStore {
 	}
 
 	return &LocalFileBasedMetadataStore{
-		clientConnMap: clientConnMap,
-		entryMap:      entryMap,
-		midList:       midList,
+		clientConnMap:          clientConnMap,
+		entryMap:               entryMap,
+		midList:                midList,
+		abstractionServiceAddr: entries.Addresses.AbstractionService,
+		selectionServiceAddr:   entries.Addresses.SelectionService,
+		selectionParams:        entries.MSLParams,
 	}
-}
-
-// GetMIDs returns list of ModelIDs that we store
-func (md *LocalFileBasedMetadataStore) GetMIDs() []comet.ModelIDType {
-	return md.midList
-}
-
-// GetEntry gets a model entry for a ModelID
-func (md *LocalFileBasedMetadataStore) GetEntry(mid comet.ModelIDType) ModelEntry {
-	return md.entryMap[mid]
-}
-
-// GetClient returns a grpc client for the Model
-func (md *LocalFileBasedMetadataStore) GetClient(mid comet.ModelIDType) (modelpb.ServiceClient, error) {
-	conn, exists := md.clientConnMap[mid]
-
-	log.Println("[Store:GetClient] does a connection exist so far? ", exists)
-
-	var err error
-	if !exists {
-		entry := md.GetEntry(mid)
-
-		log.Println("[Store:GetClient] trying to create a connection for: ", entry.Addr)
-		conn, err = grpc.Dial(entry.Addr, grpc.WithInsecure(), grpc.WithBlock())
-
-		log.Println("[Store:GetClient] connection error: ", err)
-	}
-	return modelpb.NewServiceClient(conn), err
 }

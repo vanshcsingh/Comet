@@ -41,18 +41,18 @@ type Exp4 struct {
 }
 
 // CreateExp4 returns an exp4 single selection policy
-func CreateExp4(gamma float64, numLabels int, numAdvisors int, malClient malpb.AbstractionServiceClient) EnsembleSelectionPolicy {
+func CreateExp4(gamma float64, numLabels int, numModels int, malClient malpb.AbstractionServiceClient) EnsembleSelectionPolicy {
 
 	// initialize all weights to 1
-	weights := make([]float64, numAdvisors)
-	for i := 0; i < numAdvisors; i++ {
+	weights := make([]float64, numModels)
+	for i := 0; i < numModels; i++ {
 		weights[i] = 1
 	}
 
 	return &Exp4{
 		Gamma:                   gamma,
 		K:                       numLabels,
-		N:                       numAdvisors,
+		N:                       numModels,
 		Weights:                 weights,
 		Probabilities:           make([]float64, numLabels),
 		CumulativeProbabilities: make([]float64, numLabels+1),
@@ -71,7 +71,7 @@ func (e *Exp4) Select(ctx context.Context, contextuuid string, imageVector comet
 		AdviceForModelID[idx] = vector[modelID]
 	}
 
-	label, err := md.VectorToLabel(adviceVectors[modelID])
+	label, err := md.GetMetadataStoreInstance().VectorToLabel(adviceVectors[modelID])
 	if err != nil {
 		panic(err)
 	}
@@ -169,7 +169,7 @@ func (e *Exp4) getAdviceVectors(ctx context.Context, contextuuid string, imageVe
 				panic(err)
 			}
 
-			adviceList[i], _ = md.LabelToVector(reply.Label)
+			adviceList[i], _ = md.GetMetadataStoreInstance().LabelToVector(reply.Label)
 			wg.Done()
 		}(idx, modelID)
 	}

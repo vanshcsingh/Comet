@@ -6,5 +6,26 @@
 			"model_id": 0,
 			"addr": "localhost:4000"
 		}
-	]
+    ],
+
+    "service_addresses": {
+        "abstraction_service": "localhost:3998",
+        "selection_service": "localhost:3999"
+    },
+
+    "selection_params": {
+        "labels": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+        ],
+        "gamma": 0.2
+    }
 }
