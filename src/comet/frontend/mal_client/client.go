@@ -7,15 +7,14 @@ import (
 	"time"
 
 	"comet/abstraction_service/pb"
+	md "comet/metadata_store"
 
 	"google.golang.org/grpc"
 )
 
-const (
-	address = "localhost:4001"
-)
-
 func main() {
+
+	address := md.GetMetadataStoreInstance().GetAbstractionServiceAddr()
 
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {

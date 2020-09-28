@@ -7,10 +7,10 @@ import (
 
 const (
 	// SingleSelectionType is the enumeration designating the exp3 type
-	SingleSelectionType int = iota
+	SingleSelectionType string = "string"
 
 	// EnsembleSelectionType is the enumeration designatin the exp4 typ
-	EnsembleSelectionType
+	EnsembleSelectionType string = "ensemble"
 )
 
 // SessionDB holds the weights for selection policies for contextuuids
@@ -23,8 +23,8 @@ type SessionDB interface {
 	GetEnsembleSelectionPolicy(contextUUID string) (policy.EnsembleSelectionPolicy, error)
 	SetEnsembleSelectionPolicy(contextUUID string, policy policy.EnsembleSelectionPolicy)
 
-	GetType(queryID string) int
-	SetType(queryID string, fType int)
+	GetType(queryID string) (string, error)
+	SetType(queryID string, fType string)
 
 	// Stored on cache
 	// for a given queryID, set/get the selectionPolicy used and the selection object
@@ -41,7 +41,7 @@ type LocalDB struct {
 	contextUUIDToSingleSelectionPolicy   map[string]policy.SingleSelectionPolicy
 	contextUUIDToEnsembleSelectionPolicy map[string]policy.EnsembleSelectionPolicy
 
-	queryIDToType map[string]int
+	queryIDToType map[string]string
 
 	queryIDToSingleSelection   map[string]*policy.SingleSelection
 	queryIDToEnsembleSelection map[string]*policy.EnsembleSelection
@@ -52,7 +52,7 @@ func CreateLocalDB() SessionDB {
 	return &LocalDB{
 		contextUUIDToSingleSelectionPolicy:   make(map[string]policy.SingleSelectionPolicy),
 		contextUUIDToEnsembleSelectionPolicy: make(map[string]policy.EnsembleSelectionPolicy),
-		queryIDToType:                        make(map[string]int),
+		queryIDToType:                        make(map[string]string),
 		queryIDToSingleSelection:             make(map[string]*policy.SingleSelection),
 		queryIDToEnsembleSelection:           make(map[string]*policy.EnsembleSelection),
 	}
@@ -91,16 +91,16 @@ func (l *LocalDB) SetEnsembleSelectionPolicy(contextUUID string, policy policy.E
 }
 
 // GetType ...
-func (l *LocalDB) GetType(queryID string) int {
+func (l *LocalDB) GetType(queryID string) (string, error) {
 	t, exists := l.queryIDToType[queryID]
 	if !exists {
-		panic("No type exists for queryID")
+		return "", fmt.Errorf("No entry exists for queryID: %s", queryID)
 	}
-	return t
+	return t, nil
 }
 
 // SetType ...
-func (l *LocalDB) SetType(queryID string, fType int) {
+func (l *LocalDB) SetType(queryID string, fType string) {
 	l.queryIDToType[queryID] = fType
 }
 

@@ -5,8 +5,8 @@ package pb;
 option go_package = "selection_service/pb";
 
 service SelectionService {
-	rpc Query(QueryRequest) returns (QueryReply) {} 
-	rpc Feedback(FeedbackRequest) returns (FeedbackReply) {} 
+	rpc Query(QueryRequest) returns (QueryReply) {}
+	rpc Feedback(FeedbackRequest) returns (FeedbackReply) {}
 }
 
 message QueryRequest {
@@ -17,7 +17,7 @@ message QueryRequest {
 
 message QueryReply {
 	string label = 1;
-	int32 queryID = 2;
+	string queryID = 2;
 }
 
 message FeedbackRequest {
@@ -27,5 +27,5 @@ message FeedbackRequest {
 }
 
 message FeedbackReply {
-	// TODO	
+	// TODO
 }
